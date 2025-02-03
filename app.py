@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from ingester_modules import document_ingest, delete_doc, read_doc ,get_all_doc
-from retriver_module import generate
-
+from retriver_module import generate_response , generate_chat_name
+import uvicorn
 import os
 app = FastAPI()
 
@@ -24,13 +24,15 @@ class delete_document_request(BaseModel):
     
 class read_document_request(BaseModel):
     document_id: str 
-
-class ask_questionrequest(BaseModel):
-    question: str
     
 class read_document_request(BaseModel):
     document_id: str 
 
+class ask_questionrequest(BaseModel):
+    question: str
+    
+class chat_namerequest(BaseModel):
+    chat: str
 
 @app.get("/",tags=['Health'])
 def read_root():
@@ -45,7 +47,7 @@ async def upload_document(file: UploadFile = File(...),uploader_name: str = Form
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a PDF file.")
 
     try:
-        temp_file_path = f"temp_{file.filename}"
+        temp_file_path = f"{file.filename}"
         with open(temp_file_path, "wb") as temp_file:
             temp_file.write(await file.read())
 
@@ -104,9 +106,29 @@ async def ask_question(payload:ask_questionrequest):
 
 
     try:
-        response = generate(payload.question)
+        response = generate_response(payload.question)
         
 
         return JSONResponse(content=response)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred while processing the PDF: {str(e)}")
+    
+
+@app.post("/chat_name/",tags=['Retriver'])
+async def chat_name(payload:chat_namerequest):
+    # Ensure the uploaded file is a PDF
+
+
+    try:
+        response = generate_chat_name(payload.chat)
+        
+
+        return JSONResponse(content=response)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while processing the PDF: {str(e)}")
+    
+
+
+
+if __name__=='__main__':
+    uvicorn.run("app:app",reload=True,port=int(os.getenv("PORT",8000)))

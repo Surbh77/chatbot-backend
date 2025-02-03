@@ -36,7 +36,7 @@ def document_loader(temp_file_path,uploader_name):
     doc_id = str(uuid4())
     loader = PyPDFLoader(temp_file_path)
     doc = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2500, chunk_overlap=200)
     splits = text_splitter.split_documents(doc)
 
     docs = [i.metadata.update({'document_id':doc_id,'uploader_name':uploader_name,'datetime':datetime.now()}) for i in splits] 
